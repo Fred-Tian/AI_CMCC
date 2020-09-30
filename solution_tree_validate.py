@@ -1,0 +1,51 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Sat Nov  9 22:57:48 2019
+
+@author: Administrator
+"""
+
+import numpy as np
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.multiclass import OneVsRestClassifier
+import matplotlib.pyplot as plt
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import cross_validate
+from sklearn.model_selection import ShuffleSplit
+from sklearn.utils import shuffle
+import time
+
+start = time.clock()
+
+data_processed = pd.read_csv('data_processed.csv')
+X = data_processed[['告警0', '告警1', '告警2', '告警3', '告警4', '告警5', '告警6',
+       '告警7', '告警8', '告警9']].values
+y = data_processed[['故障_传输故障','故障_动环故障', '故障_电力故障', '故障_硬件故障',
+       '故障_误告警', '故障_软件故障']].values
+y_len = (y.shape)[0]
+for i in range(y_len):
+    if(y[i,2]==1):
+        y[i,2]=2
+        
+
+test = []
+train = []
+for i in range(10):
+#    my_cv = ShuffleSplit(n_splits=4, test_size=0.25, random_state=33)
+    X,y = shuffle(X,y,random_state=33)
+    clf = OneVsRestClassifier(DecisionTreeClassifier(splitter= 'best', max_depth= 1+i,min_samples_leaf = 10))
+    scores = cross_validate(clf,X,y,cv=4,return_train_score=True)
+    test.append(scores['test_score'].mean())
+    train.append(scores['train_score'].mean())
+
+
+
+plt.plot(range(1,11),test,color='red',label = 'test')
+plt.plot(range(1,11),train,color = 'blue', label = 'train')
+plt.plot(range(1,11),[0.767225] * 10,color = 'yellow', label = 'baseline')
+plt.legend()
+plt.show()
+
+
+print(time.clock() - start)
